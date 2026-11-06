@@ -15,6 +15,11 @@ A lofi swinging game inspired by Stickman Hook — one self-contained `index.htm
 **Social** — race a friend (swap race codes / links and race their ghost), leaderboards (claude.ai version)
 **Chill** — zen (no fail, day/night sky), my room (wardrobe, trophies, music packs)
 
+**Create** — level editor: place lanterns, pads, walls, spikes, saws, lasers, rings, bubbles, updrafts and records; test-play; share level codes.
+
+Progression: XP levels (pets unlock as you level), a free 30-tier monthly season pass, buy & arrange furniture in your room.
+An intro cutscene plays on load (skippable, toggle in settings).
+
 Obstacles: lanterns, burn-out lanterns, bounce pads, boost rings, crumbly platforms, updrafts, portals, slow-mo bubbles, saws, lasers, spikes.
 Combos for fast grab chains, clutch bonus for grabs just above the fog. 33 trophies, 4 music packs.
 
