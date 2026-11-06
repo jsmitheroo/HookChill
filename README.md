@@ -2,7 +2,7 @@
 
 A lofi swinging game inspired by Stickman Hook — one self-contained `index.html`, no build step.
 
-**Play:** open `index.html` in a browser (or enable GitHub Pages on this repo).
+**Play:** the game is `public/index.html` — open it in a browser, or deploy the whole repo to Cloudflare (below) for accounts, cloud saves and leaderboards.
 
 ## Controls
 - **Hold** (click / tap / space) — grab the nearest lantern
@@ -28,6 +28,15 @@ Combos for fast grab chains, clutch bonus for grabs just above the fog. 33 troph
 - Gamepad support (A/B/X/Y or RT to hook, Start to pause), fullscreen (F)
 - ASMR UI sounds, haptics on Android, copy-your-result sharing for daily runs
 - Accessibility: colour-safe hazards, big text, assist mode
+
+## Website + accounts (Cloudflare)
+This repo is a Cloudflare Worker: `public/` is the game, `src/api.js` is the accounts API, and a D1 database stores users, saves and leaderboards.
+
+Deploy: Cloudflare dashboard → **Workers & Pages → Create → Import a repository** → pick `jsmitheroo/hookchill` → Deploy (no build command needed). The D1 database `hookchill` is created automatically on the first deploy, and every push to `main` redeploys.
+
+Accounts are username + password (passwords are salted and hashed with PBKDF2; sessions are random tokens stored only as hashes). Signed-in players get cloud saves on every device and can post leaderboard scores.
+
+API: `POST /api/register` · `POST /api/login` · `POST /api/logout` · `GET /api/me` · `GET|PUT /api/save` · `POST /api/score` · `GET /api/scores?board=&day=` · `POST /api/password`
 
 ## Offline / install
 Hosted on GitHub Pages it works as an installable app: open it once, then "Add to Home Screen" (iOS Safari) or "Install app" (Chrome/Android/desktop). After that it plays fully offline — `sw.js` caches the game and its icons.

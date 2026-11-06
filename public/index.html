@@ -252,7 +252,7 @@ input[type=range]{accent-color:#f2b59b;width:100%}
       <button class="btn" data-go="room"><span class="ic">🛋</span>my room<small>✦ <b id="mRecs">0</b> · wardrobe · trophies</small></button>
     </div>
   </div>
-  <div class="row"><button class="pill" id="bMusic">♪ music: on</button><button class="pill" data-go="settings">⚙ settings</button><button class="pill" data-go="how">? how to play</button></div>
+  <div class="row"><button class="pill" id="bMusic">♪ music: on</button><button class="pill" data-go="account" id="accBtn">👤 sign in</button><button class="pill" data-go="settings">⚙ settings</button><button class="pill" data-go="how">? how to play</button></div>
   <div class="savest local" id="saveSt"><i></i><span>saved on this device</span></div>
 </div>
 
@@ -268,6 +268,30 @@ input[type=range]{accent-color:#f2b59b;width:100%}
   <div class="row" id="roomNav"><button class="pill hot" data-go="skins">wardrobe</button><button class="pill" id="bDecor">decorate</button><button class="pill" data-go="ach">trophies</button><button class="pill" data-go="music">music packs</button><button class="pill" data-go="menu">← back</button></div>
   <div id="decorBar"></div>
   <div class="next" id="roomNext"></div>
+</div>
+
+<div class="screen" id="sAccount">
+  <div class="card" style="width:min(420px,92vw)">
+    <h2>account</h2><div class="sub" id="accSub">sign in to keep your progress on every device</div>
+    <div id="accForm">
+      <div class="tabs"><button class="pill hot" id="accTabIn">sign in</button><button class="pill" id="accTabUp">create account</button></div>
+      <input class="txt" id="accUser" placeholder="username" autocomplete="username" maxlength="16" autocapitalize="off" spellcheck="false">
+      <input class="txt" id="accPass" type="password" placeholder="password" autocomplete="current-password" maxlength="128" style="margin-top:8px">
+      <div class="sub" id="accErr" style="color:#ff9b8a;min-height:16px;margin:8px 0 0"></div>
+      <div class="row" style="margin-top:6px"><button class="pill hot" id="accGo">sign in</button></div>
+    </div>
+    <div id="accIn" style="display:none">
+      <div class="stats" id="accStats"></div>
+      <div class="row"><button class="pill hot" id="accSync">☁ sync now</button><button class="pill" id="accOut">sign out</button></div>
+      <div class="setgrp"><h3>change password</h3>
+        <input class="txt" id="accOld" type="password" placeholder="current password" autocomplete="current-password">
+        <input class="txt" id="accNew" type="password" placeholder="new password (6+ characters)" autocomplete="new-password" style="margin-top:8px">
+        <div class="sub" id="accPwMsg" style="min-height:16px;margin:8px 0 0"></div>
+        <div class="row" style="margin-top:4px"><button class="pill" id="accPwGo">update password</button></div>
+      </div>
+    </div>
+    <div class="row"><button class="pill" data-go="menu">← back</button></div>
+  </div>
 </div>
 
 <div class="screen" id="sPass">
@@ -485,19 +509,20 @@ for(const c in SHOP){if(!SHOP[c].some(it=>it.id===save.eq[c]))save.eq[c]=SHOP[c]
 function itemUnlockedFree(cat,it){return it.lvl&&lvlInfo().l>=it.lvl}
 const isAssist=()=>!!save.set.assist;
 let localOk=true;
-function persist(){save.savedAt=Date.now();try{localStorage.setItem(SKEY,JSON.stringify(save));localOk=true}catch(e){try{save.ghosts={};localStorage.setItem(SKEY,JSON.stringify(save));localOk=true}catch(e2){localOk=false}}try{cloudQueue();updSaveUI()}catch(e){}}
+function persist(){save.savedAt=Date.now();try{localStorage.setItem(SKEY,JSON.stringify(save));localOk=true}catch(e){try{save.ghosts={};localStorage.setItem(SKEY,JSON.stringify(save));localOk=true}catch(e2){localOk=false}}try{cloudQueue();accQueue();updSaveUI()}catch(e){}}
 // cloud save: your progress follows your claude.ai account (private to you), last-write-wins
 const CLOUD={ready:false,ref:null,busy:false,timer:0,last:0,err:false};
 function saveForCloud(){const c=Object.assign({},save);delete c.ghosts;return c}
 function cloudQueue(){if(!CLOUD.ready)return;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,4000)}
-async function cloudPush(){if(!CLOUD.ready||CLOUD.busy)return;CLOUD.busy=true;updSaveUI();try{const body=JSON.stringify(saveForCloud());if(body.length<240000){await CLOUD.ref.set({at:save.savedAt||Date.now(),v:1,save:body});CLOUD.last=Date.now();CLOUD.err=false}}catch(e){CLOUD.err=true}CLOUD.busy=false;updSaveUI()}
+async function cloudPush(){if(!CLOUD.ready)return;if(CLOUD.busy){CLOUD.again=true;return}CLOUD.busy=true;updSaveUI();try{const body=JSON.stringify(saveForCloud());if(body.length<240000){await CLOUD.ref.set({at:save.savedAt||Date.now(),v:1,save:body});CLOUD.last=Date.now();CLOUD.err=false}}catch(e){CLOUD.err=true}CLOUD.busy=false;updSaveUI();if(CLOUD.again){CLOUD.again=false;cloudPush()}}
 async function cloudInit(){try{const db=await lbInit();if(!db||!LB.me)return;CLOUD.ref=db.doc('data/users/'+LB.me+'/save');
  const to=new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),10000));const snap=await Promise.race([CLOUD.ref.get(),to]);
  if(snap.exists){const d=snap.data();if((d.at||0)>(save.savedAt||0)+1500&&typeof d.save==='string'){const g=save.ghosts,setNow=save.set;save=normalizeSave(JSON.parse(d.save));save.ghosts=g||{};save.set=Object.assign(save.set,{intro:setNow.intro});try{localStorage.setItem(SKEY,JSON.stringify(save))}catch(e){}setPack(save.pack);refreshMenu();toastQ('☁ progress loaded from your account')}}
  CLOUD.ready=true;CLOUD.last=Date.now();if(!snap.exists||(save.savedAt||0)>((snap.data()||{}).at||0))cloudPush();updSaveUI()}catch(e){updSaveUI()}}
 function agoStr(t){const s_=Math.round((Date.now()-t)/1000);return s_<10?'just now':s_<60?s_+'s ago':Math.round(s_/60)+'m ago'}
 function updSaveUI(){const el=document.getElementById('saveSt');if(!el)return;let txt,cls;
- if(CLOUD.ready){cls=CLOUD.busy?'busy':CLOUD.err?'local':'';txt=CLOUD.busy?'saving to your account…':CLOUD.err?'couldn\'t reach your account — saved on this device':'☁ synced to your account · '+agoStr(CLOUD.last)}
+ if(typeof ACC!=='undefined'&&ACC.api&&ACC.token){cls=ACC.busy?'busy':ACC.err?'local':'';txt=ACC.busy?'saving to '+ACC.user+'…':ACC.err?'couldn\'t reach the server — saved on this device':'☁ saved to '+ACC.user+' · '+agoStr(ACC.last||Date.now())}
+ else if(CLOUD.ready){cls=CLOUD.busy?'busy':CLOUD.err?'local':'';txt=CLOUD.busy?'saving to your account…':CLOUD.err?'couldn\'t reach your account — saved on this device':'☁ synced to your account · '+agoStr(CLOUD.last)}
  else{cls='local';txt=localOk?'💾 saved on this device'+(save.savedAt?' · '+agoStr(save.savedAt):''):'⚠ this browser won\'t keep saves — use a save code'}
  el.className='savest '+cls;el.querySelector('span').textContent=txt;const si=document.getElementById('saveInfo');if(si)si.textContent=txt}
 setInterval(updSaveUI,15000);
@@ -774,6 +799,44 @@ function gainXp(n){if(G.mode==='attract'||n<=0)return;const before=lvlInfo().l;s
 function buildPass(){const se=season(),now=new Date(),end=new Date(now.getFullYear(),now.getMonth()+1,1),days=Math.ceil((end-now)/864e5);$('#passSub').textContent='season '+se.id+' · tier '+se.tier+'/30 · '+(se.xp%PASS_XP)+'/'+PASS_XP+' xp to next · resets in '+days+' day'+(days>1?'s':'')+' (unlocked items stay)';
  const g=$('#passGrid');g.innerHTML='';PASS.forEach((T,i)=>{const d=document.createElement('div');d.className='tier'+(i<se.tier?' got':'')+(T.item?' sp':'')+(i===se.tier?' now':'');d.innerHTML='<b>tier '+(i+1)+'</b><span></span><b>'+(i<se.tier?'✔':'')+'</b>';d.querySelector('span').textContent=T.item?'🎁 '+T.n:'+'+T.pts+'✦';g.appendChild(d)})}
 
+/* ---------- accounts (website version on Cloudflare: username + password) ---------- */
+const ACC={api:false,token:null,user:null,busy:false,timer:0,last:0,err:false,mode:'in'};
+async function api(path,opts){opts=opts||{};const h={'content-type':'application/json'};if(ACC.token)h.authorization='Bearer '+ACC.token;
+ const r=await fetch('/api'+path,{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined,cache:'no-store'});let d={};try{d=await r.json()}catch(e){}
+ if(r.status===401&&ACC.token&&path!=='/login'&&path!=='/password')accForget();if(!r.ok)throw new Error(d.error||'something went wrong — try again');return d}
+function accStore(){try{if(ACC.token){localStorage.setItem('hc-token',ACC.token);localStorage.setItem('hc-user',ACC.user)}else{localStorage.removeItem('hc-token');localStorage.removeItem('hc-user')}}catch(e){}}
+function accForget(){ACC.token=null;ACC.user=null;accStore();updAccUI();updSaveUI()}
+async function accInit(){if(/claude|anthropic/.test(location.hostname)||!/^https?:$/.test(location.protocol)){updAccUI();return}
+ try{const r=await fetch('/api/health',{cache:'no-store'});if(!r.ok){updAccUI();return}ACC.api=true}catch(e){updAccUI();return}
+ try{ACC.token=localStorage.getItem('hc-token');ACC.user=localStorage.getItem('hc-user')}catch(e){}
+ if(ACC.token){try{const d=await api('/me');ACC.user=d.user.username;accStore();await accPull(false)}catch(e){}}
+ updAccUI();updSaveUI()}
+function accSaveBody(){return{state:JSON.stringify(saveForCloud()),savedAt:save.savedAt||Date.now()}}
+async function accPull(serverWins){const d=await api('/save');
+ if(d.state&&(serverWins||(d.savedAt||0)>(save.savedAt||0)+1500)){const g=save.ghosts,intro=save.set.intro;save=normalizeSave(JSON.parse(d.state));save.ghosts=g||{};save.set.intro=intro;save.savedAt=d.savedAt;try{localStorage.setItem(SKEY,JSON.stringify(save))}catch(e){}setPack(save.pack);refreshMenu();toastQ('☁ progress loaded for '+ACC.user)}
+ else if(!d.state||(save.savedAt||0)>(d.savedAt||0)+1500)await accPush();ACC.last=Date.now()}
+async function accPush(){if(!ACC.api||!ACC.token)return;if(ACC.busy){ACC.again=true;return}ACC.busy=true;updSaveUI();try{await api('/save',{method:'PUT',body:accSaveBody()});ACC.last=Date.now();ACC.err=false}catch(e){ACC.err=true}ACC.busy=false;updSaveUI();if(ACC.again){ACC.again=false;accPush()}}
+function accQueue(){if(!ACC.api||!ACC.token)return;clearTimeout(ACC.timer);ACC.timer=setTimeout(accPush,3000)}
+function setAccMode(m){ACC.mode=m;$('#accTabIn').classList.toggle('hot',m==='in');$('#accTabUp').classList.toggle('hot',m==='up');$('#accGo').textContent=m==='in'?'sign in':'create account';$('#accPass').autocomplete=m==='in'?'current-password':'new-password';$('#accErr').textContent=''}
+function updAccUI(){const b=$('#accBtn');if(b)b.textContent='👤 '+(ACC.token?ACC.user:'sign in');
+ if(!ACC.api){$('#accForm').style.display='none';$('#accIn').style.display='none';$('#accSub').innerHTML='username &amp; password accounts live on the <b>website version</b> of hook &amp; chill.<br><br>'+(CLOUD.ready?'here, your progress already saves to your claude account automatically.':'here, your progress saves on this device — use a save code in settings to move it.');return}
+ $('#accForm').style.display=ACC.token?'none':'block';$('#accIn').style.display=ACC.token?'block':'none';
+ $('#accSub').textContent=ACC.token?'signed in as '+ACC.user+' — your progress saves to your account automatically':'sign in to keep your progress on every device and post leaderboard scores';
+ if(ACC.token){const li=lvlInfo();$('#accStats').innerHTML='';[['player',ACC.user],['level',li.l],['points','✦ '+save.pts],['trophies',Object.keys(save.ach).length+'/'+ACH.length],['last sync',ACC.last?agoStr(ACC.last):'—']].forEach(r=>{const a=document.createElement('span'),b2=document.createElement('span');a.textContent=r[0];b2.textContent=r[1];a.className=b2.className='in';$('#accStats').append(a,b2)})}}
+$('#accTabIn').onclick=()=>setAccMode('in');$('#accTabUp').onclick=()=>setAccMode('up');
+async function accSubmit(){const u=$('#accUser').value.trim(),pw=$('#accPass').value,err=$('#accErr'),go=$('#accGo');err.textContent='';
+ if(!/^[a-zA-Z0-9_]{3,16}$/.test(u)){err.textContent='usernames are 3–16 letters, numbers or _';ASMR.nope();return}
+ if(pw.length<(ACC.mode==='up'?6:1)){err.textContent=ACC.mode==='up'?'password needs at least 6 characters':'enter your password';ASMR.nope();return}
+ go.disabled=true;go.textContent='…';
+ try{const d=await api(ACC.mode==='up'?'/register':'/login',{method:'POST',body:{username:u,password:pw}});ACC.token=d.token;ACC.user=d.user.username;accStore();$('#accPass').value='';
+  if(ACC.mode==='up'){save.name=save.name||ACC.user;persist();await accPush();toastQ('✔ account made — progress on this device is now saved to '+ACC.user)}else{await accPull(true);toastQ('✔ signed in as '+ACC.user)}
+  ASMR.coins();updAccUI();updSaveUI();refreshMenu()}
+ catch(e){err.textContent=e.message;ASMR.nope()}go.disabled=false;setAccMode(ACC.mode)}
+$('#accGo').onclick=accSubmit;$('#accPass').addEventListener('keydown',e=>{if(e.key==='Enter')accSubmit()});$('#accUser').addEventListener('keydown',e=>{if(e.key==='Enter')$('#accPass').focus()});
+$('#accSync').onclick=async()=>{try{await accPull(false);await accPush();toast('☁ synced');ASMR.pop()}catch(e){toast(e.message)}updAccUI()};
+$('#accOut').onclick=async()=>{try{await api('/logout',{method:'POST'})}catch(e){}accForget();toast('signed out — progress stays on this device');ASMR.pop()};
+$('#accPwGo').onclick=async()=>{const m=$('#accPwMsg');m.style.color='';try{await api('/password',{method:'POST',body:{old:$('#accOld').value,new:$('#accNew').value}});$('#accOld').value=$('#accNew').value='';m.style.color='#9fd8c0';m.textContent='password updated — other devices were signed out';ASMR.coins()}catch(e){m.style.color='#ff9b8a';m.textContent=e.message;ASMR.nope()}};
+
 /* ---------- social: race codes ---------- */
 function b64e(u8){let s_='';for(let i=0;i<u8.length;i++)s_+=String.fromCharCode(u8[i]);return btoa(s_).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function b64d(str){str=str.replace(/-/g,'+').replace(/_/g,'/');while(str.length%4)str+='=';const s_=atob(str),u=new Uint8Array(s_.length);for(let i=0;i<s_.length;i++)u[i]=s_.charCodeAt(i);return u}
@@ -788,9 +851,10 @@ function raceLabel(m){return m.m==='campaign'?'tape '+(m.l+1)+' · '+LEVELS[m.l]
 /* ---------- social: leaderboards (claude.ai shared storage) ---------- */
 const LB={db:null,user:null,me:null,tried:false,cur:'endless'};
 async function lbInit(){if(LB.tried)return LB.db;LB.tried=true;try{if(!(window.claude&&typeof window.claude.use==='function'))return null;const to=new Promise(r=>setTimeout(()=>r(null),10000));LB.db=await Promise.race([window.claude.use('db'),to]);LB.user=await Promise.race([window.claude.use('user'),to]);if(LB.db&&LB.user)LB.me=await LB.user.id();if(!LB.me)LB.db=null}catch(e){LB.db=null}return LB.db}
-async function lbSubmit(board,v){if(G.assisted||!(v>0))return;const db=await lbInit();if(!db)return;const lower=board==='course'||board==='daily',day=lower?dailyKey():null,key=board+(day||''),prev=save.lbBest[key];
+async function lbSubmit(board,v){if(G.assisted||!(v>0))return;if(ACC.api){if(ACC.token)api('/score',{method:'POST',body:{board,v:+(+v).toFixed(2),day:dailyKey()}}).catch(()=>{});return}const db=await lbInit();if(!db)return;const lower=board==='course'||board==='daily',day=lower?dailyKey():null,key=board+(day||''),prev=save.lbBest[key];
  if(prev!=null&&(lower?v>=prev:v<=prev))return;try{await db.doc('lb_'+board+'/'+LB.me).set(day?{v:+v.toFixed(2),d:day,at:Date.now()}:{v:Math.round(v),at:Date.now()});save.lbBest[key]=v;persist()}catch(e){}}
 async function lbLoad(board){LB.cur=board;$$('#lbTabs .pill').forEach(b=>b.classList.toggle('hot',b.dataset.lb===board));const list=$('#lbList');list.innerHTML='<div class="sub">loading…</div>';
+ if(ACC.api)return lbLoadApi(board,list);
  const db=await lbInit();if(LB.cur!==board)return;
  if(!db){list.innerHTML='<div class="sub" style="line-height:1.7">leaderboards live in the claude.ai version of the game.<br>share it with friends there (as contributors) and everyone\'s best scores show up here.</div>';return}
  const lower=board==='course'||board==='daily';let docs;
@@ -800,6 +864,13 @@ async function lbLoad(board){LB.cur=board;$$('#lbTabs .pill').forEach(b=>b.class
  if(!docs.length){list.innerHTML='<div class="sub">no scores yet'+(lower?' today':'')+' — be the first.</div>';return}
  let names={};try{if(LB.user&&LB.user.profiles)names=await LB.user.profiles(docs.map(d=>d.id))||{}}catch(e){}
  list.innerHTML='';docs.forEach((d,i)=>{const row=document.createElement('div');row.className='lbr'+(d.id===LB.me?' me':'');const a=document.createElement('span');a.textContent=['🥇','🥈','🥉'][i]||(i+1)+'.';const n=document.createElement('span');n.textContent=((names[d.id]&&names[d.id].name)||'someone')+(d.id===LB.me?' (you)':'');const v=document.createElement('b');v.textContent=lower?fmt(d.v)+'s':board==='rush'?d.v+'m':d.v;row.append(a,n,v);list.appendChild(row)})}
+
+async function lbLoadApi(board,list){$('#lbSub').textContent='everyone playing on the website';const lower=board==='course'||board==='daily';let rows;
+ try{rows=(await api('/scores?board='+board+'&day='+dailyKey())).rows}catch(e){if(LB.cur===board)list.innerHTML='<div class="sub">couldn\'t reach the scores right now — try again in a bit.</div>';return}
+ if(LB.cur!==board)return;list.innerHTML='';
+ if(!rows.length)list.innerHTML='<div class="sub">no scores yet'+(lower?' today':'')+' — be the first.</div>';
+ rows.forEach((d,i)=>{const row=document.createElement('div');row.className='lbr'+(d.me?' me':'');const a=document.createElement('span');a.textContent=['🥇','🥈','🥉'][i]||(i+1)+'.';const n=document.createElement('span');n.textContent=d.name+(d.me?' (you)':'');const v=document.createElement('b');v.textContent=lower?fmt(d.v)+'s':board==='rush'?d.v+'m':d.v;row.append(a,n,v);list.appendChild(row)});
+ if(!ACC.token){const n=document.createElement('div');n.className='sub';n.style.marginTop='8px';n.innerHTML='sign in (👤 on the menu) to post your scores';list.appendChild(n)}}
 
 /* ---------- game state ---------- */
 let state='menu'; // menu | play | pause | end
@@ -1405,7 +1476,7 @@ function endRun(){
  const rg=G.ghosts.find(g=>g.race);if(rg&&raceOk){const ft=+G.raceSrc.meta.t,dlt=Math.abs(G.t-ft).toFixed(2);if(G.t<ft){stats.unshift(['race','you beat '+rg.name+' by '+dlt+'s 🏁']);track('raceWins');nb=nb||'race won'}else stats.unshift(['race',rg.name+' won by '+dlt+'s'])}
  save.pts+=pts;save.recs+=earned;stats.push(['✦ points','+'+pts+(firstClear?' (first clear!)':'')]);
  const xpg=Math.round(pts*2+10+G.flips*2+G.maxCombo*3);stats.push(['xp','+'+xpg]);gainXp(xpg);checkAch();
- persist();if(CLOUD.ready){clearTimeout(CLOUD.timer);cloudPush()}
+ persist();if(CLOUD.ready){clearTimeout(CLOUD.timer);cloudPush()}if(ACC.token){clearTimeout(ACC.timer);accPush()}
  $('#eTitle').textContent=(G.won?'✦ ':'')+title;$('#eSub').textContent=sub;$('#eNew').textContent=nb?'★ '+nb+' ★':'';
  $('#eStats').innerHTML=stats.map(s_=>'<span>'+s_[0]+'</span><span'+(s_[0]==='stars'?' class="stars"':'')+'>'+s_[1]+'</span>').join('');
  [...$('#eStats').children].forEach((el,i)=>setTimeout(()=>{el.classList.add('in');if(i%2)ASMR.type()},250+i*70));
@@ -1631,6 +1702,7 @@ $$('[data-go]').forEach(b=>b.addEventListener('click',e=>{
  else if(g==='how')show('sHow');
  else if(g==='room'){refreshRoom();show('sRoom')}
  else if(g==='pass'){buildPass();show('sPass')}
+ else if(g==='account'){updAccUI();setAccMode(ACC.mode);show('sAccount')}
  else if(g==='editor'){openEditMenu()}
  else if(g==='ach'){buildAch();show('sAch')}
  else if(g==='music'){buildMusic();show('sMusic')}
@@ -1644,7 +1716,7 @@ $('#bMusic').onclick=e=>{e.stopPropagation();initAudio();save.set.on=save.set.on
 const TOGS=[['intro','#tIntro'],['grain','#tGrain'],['shake','#tShake'],['ghost','#tGhost'],['fx','#tFx'],['cb','#tCb'],['big','#tBig'],['assist','#tAssist']];
 function syncSettings(){$('#vMusic').value=save.set.music;$('#vSfx').value=save.set.sfx;$('#iName').value=save.name||'';document.documentElement.classList.toggle('big',!!save.set.big);for(const[k,id]of TOGS){const b=$(id);b.textContent=save.set[k]?'on':'off';b.classList.toggle('on',!!save.set[k])}}
 $('#vMusic').oninput=e=>{save.set.music=+e.target.value;save.set.on=1;setMusicVol();persist()};
-$('#bSaveNow').onclick=()=>{persist();if(CLOUD.ready)cloudPush();toast(CLOUD.ready?'☁ saving to your account':'💾 saved');ASMR.pop()};
+$('#bSaveNow').onclick=()=>{persist();if(CLOUD.ready)cloudPush();if(ACC.token)accPush();toast(ACC.token?'☁ saving to '+ACC.user:CLOUD.ready?'☁ saving to your account':'💾 saved');ASMR.pop()};
 $('#bExport').onclick=e=>{const t=saveCode(),b=e.target;const done=()=>{b.textContent='copied ✓ keep it somewhere safe';ASMR.pop()};try{navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done))}catch(er){fallbackCopy(t,done)}};
 let impArm=false;$('#bImportSave').onclick=e=>{const ta=$('#saveCode');if(ta.style.display==='none'){ta.style.display='block';ta.focus();e.target.textContent='load this code';return}
  if(!impArm){impArm=true;e.target.textContent='tap again — replaces current progress';setTimeout(()=>{impArm=false;e.target.textContent='load this code'},3000);return}
@@ -1664,7 +1736,7 @@ $('#bPGrain').onclick=()=>{save.set.grain=save.set.grain?0:1;persist();syncPause
 $('#bRestart').onclick=()=>{G.attempts=0;restart(true)};
 $('#hint').textContent='hold to hook · release to fly · spam to climb';
 $('#bQuit').onclick=()=>{if(G.fromEditor&&G.mode==='custom')openEditor(G.custom);else toMenu()};
-addEventListener('visibilitychange',()=>{if(document.hidden){pause();persist();if(CLOUD.ready){clearTimeout(CLOUD.timer);cloudPush()}}});
+addEventListener('visibilitychange',()=>{if(document.hidden){pause();persist();if(CLOUD.ready){clearTimeout(CLOUD.timer);cloudPush()}if(ACC.token){clearTimeout(ACC.timer);accPush()}}});
 addEventListener('pagehide',()=>{try{localStorage.setItem(SKEY,JSON.stringify(save))}catch(e){}});
 addEventListener('blur',()=>{if(state==='play'&&!G.ready)pause()});
 
@@ -1739,7 +1811,7 @@ $('#skipB').onclick=e=>{e.stopPropagation();initAudio();endIntro()};
 cv.addEventListener('pointerdown',()=>{if(state==='intro')introStart()});
 addEventListener('keydown',e=>{if(state!=='intro')return;if(e.key==='Escape'){initAudio();endIntro()}else introStart()});
 // boot into attract mode
-G.mode='attract';buildRun();refreshMenu();ensureCh();updSaveUI();setTimeout(cloudInit,300);document.documentElement.classList.toggle('big',!!save.set.big);
+G.mode='attract';buildRun();refreshMenu();ensureCh();updSaveUI();setTimeout(cloudInit,300);accInit();document.documentElement.classList.toggle('big',!!save.set.big);
 if(save.set.intro&&!/^#race=/.test(location.hash)){state='intro';show(null);$('#skipB').classList.add('on')}
 if(/^#race=HC1\./.test(location.hash)){$('#raceIn').value=location.hash.slice(6);$('#raceIn').dispatchEvent(new Event('input'));show('sRace')}
 </script>

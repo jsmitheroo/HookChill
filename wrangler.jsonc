@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hookchill",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  // The D1 database is created automatically on the first deploy (wrangler 4.45+).
+  // If your deploy ever complains about it, create one called "hookchill" in the
+  // Cloudflare dashboard (Storage & Databases → D1) and add its id here as "database_id".
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hookchill"
+    }
+  ]
+}
