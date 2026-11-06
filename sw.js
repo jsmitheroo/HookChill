@@ -1,6 +1,6 @@
 // hook & chill — offline support. The whole game lives in index.html, so caching
 // these few files is enough to play with no connection once it's been opened once.
-const CACHE = 'hookchill-v4';
+const CACHE = 'hookchill-v5';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
