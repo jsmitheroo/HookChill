@@ -17,7 +17,7 @@ A lofi swinging game inspired by Stickman Hook — one self-contained `index.htm
 - **Daily obstacle course** — 8 sections remixed every day: walls, spike tunnels, saws, laser gates, ring launches, stairways, checkpoints
 - **Zen** — clouds catch you, no fail
 
-Collect vinyl records ◉ to unlock colours, headwear and trails in the wardrobe.
+Every run in every mode earns ✦ points (vinyl records ◉ give bonus points) — spend them on colours, headwear and trails in the wardrobe.
 
 Music is generated live with the Web Audio API (rhodes chords, swung drums, vinyl crackle). Progress is saved in `localStorage`.
 
