@@ -25,3 +25,6 @@ Music is generated live with the Web Audio API (rhodes chords, swung drums, viny
 - Works on desktop, phones (portrait & landscape, notch-safe) and tablets; installable to home screen
 - Gamepad support (A/B/X/Y or RT to hook, Start to pause), fullscreen (F)
 - ASMR UI sounds, haptics on Android, copy-your-result sharing for daily runs
+
+## Offline / install
+Hosted on GitHub Pages it works as an installable app: open it once, then "Add to Home Screen" (iOS Safari) or "Install app" (Chrome/Android/desktop). After that it plays fully offline — `sw.js` caches the game and its icons.
