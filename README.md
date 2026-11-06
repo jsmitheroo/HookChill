@@ -14,9 +14,14 @@ A lofi swinging game inspired by Stickman Hook — one self-contained `index.htm
 - **Endless** — procedural, difficulty ramps, flips add bonus points
 - **Rush** — clock ticks down, checkpoints add +8s
 - **Daily tape** — a new seeded level each day
-- **Obstacle course** — 8 handmade sections: walls, spike tunnel, saws, laser gates, ring launches, checkpoints
+- **Daily obstacle course** — 8 sections remixed every day: walls, spike tunnels, saws, laser gates, ring launches, stairways, checkpoints
 - **Zen** — clouds catch you, no fail
 
 Collect vinyl records ◉ to unlock colours, headwear and trails in the wardrobe.
 
 Music is generated live with the Web Audio API (rhodes chords, swung drums, vinyl crackle). Progress is saved in `localStorage`.
+
+## Extras
+- Works on desktop, phones (portrait & landscape, notch-safe) and tablets; installable to home screen
+- Gamepad support (A/B/X/Y or RT to hook, Start to pause), fullscreen (F)
+- ASMR UI sounds, haptics on Android, copy-your-result sharing for daily runs
